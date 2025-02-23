@@ -18,6 +18,8 @@ def setup_argument_parser() -> argparse.ArgumentParser:
                         help='Format the response as an ordered list')
     parser.add_argument('-s', '--short', action='store_true',
                         help='Request a short response (paragraph or less)')
+    parser.add_argument('-na', '--no-animation', action='store_true',
+                        help='Animate the response as it is being printed')
     parser.add_argument('--model', type=str,
                         help='The model to use (auto-selected based on query)')
     parser.add_argument('--max-tokens', type=int, default=1000,
@@ -58,10 +60,15 @@ def call_anthropic_api(prompt: str, args, api_key: str) -> None:
         tracker.stop()
         response_text = response.content[0].text
 
-        # Apply formatting and render smoothly
+        # Apply formatting
         formatted_text = formatter.enhance_text_formatting(response_text)
         formatted_text = formatter.highlight_code_blocks(formatted_text)
-        render_text_smoothly(formatted_text)
+
+        # Render the response
+        if args.no_animation:
+            print(formatted_text)
+        else:
+            render_text_smoothly(formatted_text)
 
         messages.append({"role": "assistant", "content": response_text})
         print("=" * 50 + "\n")

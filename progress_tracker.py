@@ -41,7 +41,7 @@ class ProgressTracker:
             time.sleep(0.1)
 
 
-def render_text_smoothly(text: str, delay: float = 0.002):
+def render_text_smoothly(text: str, delay: float = 0.0015):
     """Render text with a smooth typing animation"""
     for char in text:
         sys.stdout.write(char)

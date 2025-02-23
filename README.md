@@ -61,6 +61,7 @@ python3 claude.py --model claude-3-opus-20240229 "Explain neural networks"
 
 - `-s, --short`: Request a short response (one paragraph or less)
 - `-c, --concise`: Format the response as a numbered list
+- `-na, --no-animation`: The typing animation is disabled
 - `--model`: Manually specify the Claude model to use
 - `--max-tokens`: Set maximum response length (default: 1000)
 

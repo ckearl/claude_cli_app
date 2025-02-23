@@ -12,7 +12,7 @@ class ConversationManager:
         self.messages = messages or []
         self.formatter = TextFormatter()
 
-    def handle_conversation(self, model: str, max_tokens: int, concise: bool, short: bool) -> None:
+    def handle_conversation(self, model: str, max_tokens: int, concise: bool, short: bool, no_animation: bool = True) -> None:
         print(colored(
             "\nConversation started. Enter 'exit' or 'quit' at any time to end the conversation.", "white"))
 
@@ -28,9 +28,10 @@ class ConversationManager:
                 print(colored("Goodbye!", "yellow"))
                 break
 
-            self.process_message(user_input, model, max_tokens, concise, short)
+            self.process_message(
+                user_input, model, max_tokens, concise, short, no_animation)
 
-    def process_message(self, user_input: str, model: str, max_tokens: int, concise: bool, short: bool) -> None:
+    def process_message(self, user_input: str, model: str, max_tokens: int, concise: bool, short: bool, no_animation: bool) -> None:
         try:
             modified_input = ModelSelector.modify_prompt(
                 user_input, concise, short)
@@ -40,8 +41,9 @@ class ConversationManager:
             print(colored("CLAUDE'S RESPONSE", "green", attrs=[
                   "bold"]) + colored(":", "white") + "\n")
 
-            tracker = ProgressTracker()
-            tracker.start()
+            if no_animation:
+                tracker = ProgressTracker()
+                tracker.start()
 
             response = self.client.messages.create(
                 model=model,
@@ -52,12 +54,17 @@ class ConversationManager:
             tracker.stop()
             response_text = response.content[0].text
 
-            # Apply formatting and render smoothly
+            # Apply formatting
             formatted_text = self.formatter.enhance_text_formatting(
                 response_text)
             formatted_text = self.formatter.highlight_code_blocks(
                 formatted_text)
-            render_text_smoothly(formatted_text)
+            
+            # Render the response
+            if no_animation:
+                print(formatted_text)
+            else:
+                render_text_smoothly(formatted_text)
 
             self.messages.append(
                 {"role": "assistant", "content": response_text})
