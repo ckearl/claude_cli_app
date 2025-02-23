@@ -156,13 +156,79 @@ def handle_conversation(client: anthropic.Anthropic, messages: list, model: str,
                 messages=messages
             )
             response_text = response.content[0].text
-            print(colored(highlight_code_blocks(response_text), "white"))
+            response_text = enhance_text_formatting(response_text)
+            response_text = highlight_code_blocks(response_text)
+            print(colored(response_text, "white"))
+            
             messages.append({"role": "assistant", "content": response_text})
             print("=" * 50)
 
         except Exception as e:
             print(f"Error: {e}")
             break
+
+
+def enhance_text_formatting(text: str) -> str:
+    """Enhance text with additional formatting while preserving code blocks."""
+    # First find all code blocks and replace them with placeholders
+    code_blocks = {}
+    placeholder_pattern = 'CODE_BLOCK_PLACEHOLDER_{}'
+    triple_code_pattern = r'```(?:\w+)?\n.*?\n```'
+
+    def store_code_block(match):
+        placeholder = placeholder_pattern.format(len(code_blocks))
+        code_blocks[placeholder] = match.group(0)
+        return placeholder
+
+    text = re.sub(triple_code_pattern, store_code_block, text, flags=re.DOTALL)
+
+    # Now handle inline formatting
+    # Handle inline code (text wrapped in single backticks)
+    inline_code_pattern = r'`([^`]+)`'
+
+    def code_replace(match):
+        content = match.group(1)
+        return colored(content, 'green', 'on_grey', attrs=['bold'])
+    text = re.sub(inline_code_pattern, code_replace, text)
+
+    # Handle bold text
+    bold_pattern = r'\*\*([^*]+)\*\*'
+
+    def bold_replace(match):
+        content = match.group(1)
+        return colored(content, attrs=['bold'])
+    text = re.sub(bold_pattern, bold_replace, text)
+
+    # Handle italics
+    italic_pattern = r'\*([^*]+)\*'
+
+    def italic_replace(match):
+        content = match.group(1)
+        return colored(content, attrs=['dark'])
+    text = re.sub(italic_pattern, italic_replace, text)
+
+    # Handle URLs
+    url_pattern = r'\[([^\]]+)\]\(([^\)]+)\)'
+
+    def url_replace(match):
+        text, url = match.group(1), match.group(2)
+        return colored(text, 'blue', attrs=['underline'])
+    text = re.sub(url_pattern, url_replace, text)
+
+    # Handle headers
+    header_pattern = r'^(#{1,6})\s+(.+)$'
+
+    def header_replace(match):
+        level = len(match.group(1))
+        content = match.group(2)
+        return '\n' + colored(content, 'white', attrs=['bold', 'underline']) + '\n'
+    text = re.sub(header_pattern, header_replace, text, flags=re.MULTILINE)
+
+    # Restore code blocks
+    for placeholder, code_block in code_blocks.items():
+        text = text.replace(placeholder, code_block)
+
+    return text
 
 
 def call_anthropic_api(prompt: str, args, api_key: str) -> None:
@@ -188,7 +254,11 @@ def call_anthropic_api(prompt: str, args, api_key: str) -> None:
             messages=messages
         )
         response_text = response.content[0].text
-        print(colored(highlight_code_blocks(response_text), "white"))
+        response_text = enhance_text_formatting(response_text)
+
+        response_text = highlight_code_blocks(response_text)
+        print(colored(response_text, "white"))
+
         messages.append({"role": "assistant", "content": response_text})
         print("=" * 50 + "\n")
 
