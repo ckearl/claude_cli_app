@@ -33,7 +33,7 @@ export ANTHROPIC_API_KEY='your-api-key'
 
 You can add this line to your `.bashrc` or `.bash_profile` to persist the key across sessions.
 
-> [! NOTE]
+> [!NOTE]
 > You can obtain an API key by signing up at [Anthropic](https://anthropic.com/). Many forums say that you can use the API for free for a limited number of queries, but I wasn't able to figure it out. I ended up depositing $5 into my account and I've made sure to stay within the free tier so I haven't been charged anything.
 
 ## Usage
