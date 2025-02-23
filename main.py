@@ -35,9 +35,9 @@ def select_model(prompt: str, args) -> str:
         return args.model
 
     # Use Haiku for short/simple queries
-    if args.short or args.concise or len(prompt.split()) < 20:
+    if args.short or len(prompt.split()) < 20:
         return 'claude-3-haiku-20240307'
-
+    
     # Default to Sonnet for medium complexity
     return 'claude-3-sonnet-20240229'
 
@@ -182,7 +182,24 @@ def enhance_text_formatting(text: str) -> str:
 
     text = re.sub(triple_code_pattern, store_code_block, text, flags=re.DOTALL)
 
-    # Now handle inline formatting
+    # Handle lists first (before other inline formatting)
+    # Numbered lists
+    number_pattern = r'^(\s*)(\d+\.)(\s+)(.+)$'
+
+    def number_replace(match):
+        indent, number, spacing, content = match.groups()
+        return f"{indent}{colored(number, 'yellow', attrs=['bold'])}{spacing}{colored(content, 'white')}"
+    text = re.sub(number_pattern, number_replace, text, flags=re.MULTILINE)
+
+    # Bullet points
+    bullet_pattern = r'^(\s*)[•\-\*](\s+)(.+)$'
+
+    def bullet_replace(match):
+        indent, spacing, content = match.groups()
+        bullet = colored('•', 'yellow')
+        return f"{indent}{colored(bullet, 'yellow', attrs=['bold'])}{spacing}{colored(content, 'white')}"
+    text = re.sub(bullet_pattern, bullet_replace, text, flags=re.MULTILINE)
+
     # Handle inline code (text wrapped in single backticks)
     inline_code_pattern = r'`([^`]+)`'
 
@@ -229,7 +246,6 @@ def enhance_text_formatting(text: str) -> str:
         text = text.replace(placeholder, code_block)
 
     return text
-
 
 def call_anthropic_api(prompt: str, args, api_key: str) -> None:
     client = anthropic.Anthropic(api_key=api_key)
