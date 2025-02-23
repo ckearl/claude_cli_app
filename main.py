@@ -11,6 +11,7 @@ from pygments.formatters import TerminalFormatter
 from pygments.lexers import get_lexer_by_name, guess_lexer
 from pygments.util import ClassNotFound
 from auth import get_api_key
+from progress_tracker import ProgressTracker, render_text_smoothly
 
 
 def setup_argument_parser() -> argparse.ArgumentParser:
@@ -150,23 +151,30 @@ def handle_conversation(client: anthropic.Anthropic, messages: list, model: str,
             print(colored("CLAUDE'S RESPONSE", "green", attrs=[
                   "bold"]) + colored(":", "white") + "\n")
 
+            # Use progress tracking for the response
+            tracker = ProgressTracker()
+            tracker.start()
+
             response = client.messages.create(
                 model=model,
                 max_tokens=max_tokens,
                 messages=messages
             )
+
+            tracker.stop()
             response_text = response.content[0].text
-            response_text = enhance_text_formatting(response_text)
-            response_text = highlight_code_blocks(response_text)
-            print(colored(response_text, "white"))
-            
+
+            # Apply formatting and render smoothly
+            formatted_text = enhance_text_formatting(response_text)
+            formatted_text = highlight_code_blocks(formatted_text)
+            render_text_smoothly(formatted_text)
+
             messages.append({"role": "assistant", "content": response_text})
             print("=" * 50)
 
         except Exception as e:
             print(f"Error: {e}")
             break
-
 
 def enhance_text_formatting(text: str) -> str:
     """Enhance text with additional formatting while preserving code blocks."""
@@ -247,6 +255,7 @@ def enhance_text_formatting(text: str) -> str:
 
     return text
 
+
 def call_anthropic_api(prompt: str, args, api_key: str) -> None:
     client = anthropic.Anthropic(api_key=api_key)
     model = select_model(prompt, args)
@@ -264,16 +273,23 @@ def call_anthropic_api(prompt: str, args, api_key: str) -> None:
         print(colored("CLAUDE'S RESPONSE", "green", attrs=[
               "bold"]) + colored(":", "white") + "\n")
 
+        # Use progress tracking for the response
+        tracker = ProgressTracker()
+        tracker.start()
+
         response = client.messages.create(
             model=model,
             max_tokens=args.max_tokens,
             messages=messages
         )
-        response_text = response.content[0].text
-        response_text = enhance_text_formatting(response_text)
 
-        response_text = highlight_code_blocks(response_text)
-        print(colored(response_text, "white"))
+        tracker.stop()
+        response_text = response.content[0].text
+
+        # Apply formatting and render smoothly
+        formatted_text = enhance_text_formatting(response_text)
+        formatted_text = highlight_code_blocks(formatted_text)
+        render_text_smoothly(formatted_text)
 
         messages.append({"role": "assistant", "content": response_text})
         print("=" * 50 + "\n")
@@ -286,7 +302,6 @@ def call_anthropic_api(prompt: str, args, api_key: str) -> None:
 
     except Exception as e:
         print(f"Unexpected error: {e}")
-
 
 def main():
     parser = setup_argument_parser()
